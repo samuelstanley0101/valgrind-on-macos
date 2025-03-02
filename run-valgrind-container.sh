@@ -78,3 +78,4 @@ docker run --rm \
     bash "$LINUX_DIR"/run-in-container.sh $VALGRIND_ARGS_STR
 
 # delete the copied directory
+rm -rf "$COPY_DIR"
