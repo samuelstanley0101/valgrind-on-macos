@@ -62,6 +62,8 @@ ln -s [PATH_TO_SCRIPT]/run-valgrind-container.sh /usr/local/bin/valgrind
 
 Normally Valgrind takes an executable and runs it while checking for memory leaks. Unfortunately, no executable compiled for macOS can be expected to run directly in Linux because of differences in libraries and system calls. As a result, any code that must be checked for memory leaks must be compiled in the Linux environment. This is why you had to install `gcc` and `make` in the Linux image.
 
-The scripts in this repo will handle copying the source code to Linux and recompiling it, but they must know what to compile first. **Therefore you must create a Makefile in the same directory as your code which has a rule the same name as the executable you supply**. If no such rule exists then the script will run `make` and hope for the best.
+The scripts in this repo will handle copying the source code to Linux and recompiling it, but they must know what to compile first. You have two options for this:
 
-Provided you have a Makefile in the same directory as your executable, **you can use this script the same way you would use valgrind normally**.
+1. **Explicit Compilation**: If you supply the `-C=` or `--compile-command=` argument to your valgrind call you can specify exactly how the executable should be compiled. Following this argument must be a single string with the compilation command. This is ideal for simple programs. **You must still specify the executable name to be executed**.
+    - **Ex**: `valgrind -C='gcc main.c -o driver' driver`
+2. **Makefile**: For complex programs you should create a Makefile in the same directory as your code which has a rule the same name as the executable you supply. If no such rule exists then the script will run `make` and hope for the best.

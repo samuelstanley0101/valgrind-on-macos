@@ -6,10 +6,14 @@ SCRIPT_DIR=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
 # go to this script's directory
 cd "$SCRIPT_DIR"
 
+EXPLICIT_COMPILATION=false
+COMPILATION_ARGS=""
+
 # Collect all arguments for valgrind
 VALGRIND_ARGS=()
-for arg in "$@"; do
-    VALGRIND_ARGS+=("$arg")
+while [[ -n "$1" ]]; do
+    VALGRIND_ARGS+=("$1")
+    shift
 done
 
 # join the array into a single string

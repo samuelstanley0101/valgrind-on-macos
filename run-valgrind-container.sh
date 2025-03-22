@@ -13,22 +13,30 @@ PROGRAM_NAME=""
 PARENT_DIR=""
 COPY_DIR=""
 
-# Collect all arguments for valgrind
+EXPLICIT_COMPILATION=false
+COMPILATION_ARGS=""
+
 VALGRIND_ARGS=()
-for arg in "$@"; do
-    VALGRIND_ARGS+=("$arg")
+
+# collect all args for valgrind
+while [[ "$1" =~ ^-  ]]; do
+    case $1 in
+        -C=* | --compile-command=* )  # check for explicit compilation args
+            EXPLICIT_COMPILATION=true
+            COMPILATION_ARGS=${1#*=}
+            ;;
+        *)
+            VALGRIND_ARGS+=("$1")
+            ;;
+    esac
+
+    shift
 done
 
-# try to find an executable in the argument list
-for i in "${VALGRIND_ARGS[@]}"; do
-    if [[ -f $i ]] && [[ -x $i ]]; then  # check if i is an executable
-        PROGRAM_ARG="$i"
-        break
-    fi
-done
-
-# check that an executable was found
-if [[ -z $PROGRAM_ARG ]]; then
+# get the name of the executable
+if [[ -f "$1" && -x "$1" ]]; then  # check if the current argument is executable
+    PROGRAM_ARG="$1"
+else
     echo "Error: You must include the name of an executable"
     exit 1
 fi
@@ -37,18 +45,19 @@ fi
 PROGRAM_NAME=$(basename "$PROGRAM_ARG")
 PARENT_DIR=$(realpath "$(dirname "$PROGRAM_ARG")")
 
-# check for Makefile in parent directory
-if [[ ! -e $PARENT_DIR/Makefile ]]; then
+# check for Makefile in parent directory if EXPLICIT_COMPILATION is off
+if [[ $EXPLICIT_COMPILATION = false && ! -e $PARENT_DIR/Makefile ]]; then
     echo "Error: You must include a Makefile to build your executable in the same directory as your executable"
     exit 1
 fi
 
-# replace the original executable path with a relative path in VALGRIND_ARGS
-for i in "${!VALGRIND_ARGS[@]}"; do
-    if [[ "${VALGRIND_ARGS[$i]}" == "$PROGRAM_ARG" ]]; then
-        VALGRIND_ARGS[$i]="./${PROGRAM_NAME}"
-        break
-    fi
+# add the executable name to VALGRIND_ARGS
+VALGRIND_ARGS+=("./$PROGRAM_NAME")
+
+# add the rest of the arguments to VALGRIND_ARGS
+shift  # skip the executable name
+while [[ -n "$1" ]]; do
+    VALGRIND_ARGS+=("$1")
 done
 
 # join the array into a single string
@@ -66,7 +75,13 @@ cp -r "$PARENT_DIR"/* "$COPY_DIR"
 cd "$COPY_DIR" || exit
 
 # make the copied directory clean
-make clean || rm -f *.o "$PROGRAM_NAME"
+make clean > /dev/null 2>&1 || rm -f *.o "$PROGRAM_NAME"
+
+# generate a makefile if EXPLICIT_COMPILATION is on
+if [[ $EXPLICIT_COMPILATION = true ]]; then
+    echo "$PROGRAM_NAME:" > Makefile
+    echo -e "\t$COMPILATION_ARGS" >> Makefile
+fi
 
 # add the run-in-container script to the copied directory
 cp "$SCRIPT_DIR/run-in-container.sh" "$COPY_DIR"
