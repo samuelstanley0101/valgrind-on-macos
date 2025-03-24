@@ -60,7 +60,7 @@ ln -s [PATH_TO_SCRIPT]/run-valgrind-container.sh /usr/local/bin/valgrind
 
 ## Running Valgrind
 
-Normally Valgrind takes an executable and runs it while checking for memory leaks. Unfortunately, no executable compiled for macOS can be expected to run directly in Linux because of differences in libraries and system calls. As a result, any code that must be checked for memory leaks must be compiled in the Linux environment. This is why you had to install `gcc` and `make` in the Linux image.
+Normally Valgrind takes an executable and runs it while checking for memory leaks. Unfortunately, no executable compiled for macOS can run in Linux because they use different executable formats (Mach-O vs ELF). As a result, any code that must be checked for memory leaks must be compiled in the Linux environment. This is why you had to install `gcc` and `make` in the Linux image.
 
 The scripts in this repo will handle copying the source code to Linux and recompiling it, but they must know what to compile first. You have two options for this:
 
